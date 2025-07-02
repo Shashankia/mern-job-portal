@@ -9,33 +9,50 @@ import jobRoutes from "./routes/job.routes.js";
 import applicationRoutes from "./routes/application.routes.js";
 import { v2 as cloudinary } from "cloudinary";
 
+// 🌐 path setup ke liye (React build serve karne ke liye)
+import path from "path";
+import { fileURLToPath } from "url";
+
 dotenv.config();
 const app = express();
-// middlewares
+
+// middleware
 app.use(express.json());
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
+
 const corsOptions = {
-  origin: "http://localhost:5173",
+  origin: process.env.CLIENT_URL || "http://localhost:5173",
   credentials: true,
 };
 app.use(cors(corsOptions));
 
-
-const PORT = process.env.PORT || 3000;
-// api endpoints
-
+// API routes
 app.use("/api/user", userRoutes);
 app.use("/api/company", companyRoutes);
 app.use("/api/job", jobRoutes);
 app.use("/api/application", applicationRoutes);
-// cloudinary code
+
+// Cloudinary config
 cloudinary.config({
-  cloud_name: "dkbcfjxhv",
-  api_key: "779515296253342",
-  api_secret: "7rX4Kda63GM_7PQ9c7gGKrozuXk",
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
 });
+
+// ✅ React frontend serve karne ka code 👇
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+app.use(express.static(path.join(__dirname, "../frontend/dist")));
+
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "../frontend/dist/index.html"));
+});
+
+// ✅ Server start
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   connectDB();
-  console.log(`server is running ${PORT}`);
+  console.log(`Server is running on port ${PORT}`);
 });
